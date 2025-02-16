@@ -1,8 +1,8 @@
 ﻿using Asp.Versioning;
 using FlashApp.API.Constants;
 using FlashApp.API.Controllers.Base;
-using FlashApp.Application.Users.GetLoggedInUser;
-using FlashApp.Application.Users.LogInUser;
+using FlashApp.Application.Auth.GetLoggedInUser;
+using FlashApp.Application.Auth.LogInUser;
 using FlashApp.Domain.Entities.Abstractions;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -15,8 +15,8 @@ namespace FlashApp.API.Controllers.Auth
     [Route("api/v{version:apiVersion}/[controller]")]
     public class AuthController(ISender sender) : BaseController(sender)
     {
+        [Authorize]
         [HttpGet("apikey")]
-        [Authorize(AuthenticationSchemes = "ApiKeyAuth")]
         public IActionResult GetWithApiKey()
         {
             return Ok(new { message = "Access granted via API Key." });

@@ -29,6 +29,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 using AuthenticationService = FlashApp.Infrastructure.Authentication.AuthenticationService;
 using IAuthenticationService = FlashApp.Application.Abstractions.Authentication.IAuthenticationService;
 using IdentityOptions = FlashApp.Infrastructure.Configuration.IdentityOptions;
+using FlashApp.Infrastructure.Constants;
 
 namespace FlashApp.Infrastructure;
 public static class DependencyInjection
@@ -116,48 +117,41 @@ public static class DependencyInjection
     private static void ConfigureGenSwaggerOptions(SwaggerGenOptions options, IConfiguration configuration)
     {
         var identityConfiguration = configuration.GetSection(nameof(IdentityOptions)).Get<IdentityOptions>();
-        options.AddSecurityDefinition("OAuth2", new OpenApiSecurityScheme
-        {
-            Type = SecuritySchemeType.OAuth2,
-            Flows = new OpenApiOAuthFlows
+
+        options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
-                AuthorizationCode = new OpenApiOAuthFlow
-                {
-                    AuthorizationUrl = new Uri(identityConfiguration.AuthorizationEndpoint),
-                    TokenUrl = new Uri(identityConfiguration.TokenEndpoint),
-                    Scopes = new Dictionary<string, string>
-                    {
-                        { "api.read", "Read access to API" },
-                        { "api.write", "Write access to API" }
-                    }
-                }
-            }
-        });
-        options.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
-        {
-            Description = "API Key required in the 'X-API-KEY' header",
-            Type = SecuritySchemeType.ApiKey,
-            Name = "X-API-KEY",
-            In = ParameterLocation.Header
-        });
+                Description = "Enter Bearer Token'",
+                Type = SecuritySchemeType.Http,
+                Scheme = "Bearer",
+                Name = "Authorization",
+                In = ParameterLocation.Header
+            });
         
-        options.AddSecurityRequirement(new OpenApiSecurityRequirement
-        {
+            options.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
             {
-                new OpenApiSecurityScheme
-                {
-                    Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "OAuth2" }
-                },
-                new List<string> { "api.read", "api.write" }
-            },
+                Description = "Enter API Key in the 'X-API-KEY' header",
+                Type = SecuritySchemeType.ApiKey,
+                Name = "X-API-KEY",
+                In = ParameterLocation.Header
+            });
+            
+            options.AddSecurityRequirement(new OpenApiSecurityRequirement
             {
-                new OpenApiSecurityScheme
                 {
-                    Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "ApiKey" }
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+                    },
+                    new List<string>()
                 },
-                new List<string>()
-            }
-        });
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "ApiKey" }
+                    },
+                    new List<string>()
+                }
+            });
     }
     
     private static void AddAuthentication(IServiceCollection services, IConfiguration configuration)
@@ -167,18 +161,27 @@ public static class DependencyInjection
         services
             .AddAuthentication(options =>
             {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                // Allow Authentication via Bearer or Api Key
+                options.DefaultAuthenticateScheme = "MultipleAuthSchemes";
+                options.DefaultChallengeScheme = "MultipleAuthSchemes";
             })
-            .AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>("ApiKeyAuth", null)
+            .AddPolicyScheme("MultipleAuthSchemes", "API Key or JWT", options =>
+            {
+                options.ForwardDefaultSelector = context =>
+                
+                {
+                    var hasApiKey = context.Request.Headers.ContainsKey("X-API-KEY");
+                    return hasApiKey ? CustomSecuritySchemes.ApiKey : JwtBearerDefaults.AuthenticationScheme;
+                };
+            })
+            .AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(CustomSecuritySchemes.ApiKey, null)
             .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
             {
                 options.Authority = authenticationOptions.TokenEndpoint;
-                options.Audience = authenticationOptions.Audience; 
+                options.Audience = authenticationOptions.Audience;
             });
 
         services.ConfigureOptions<JwtBearerOptionsSetup>();
-
 
         services.AddHttpClient<IAuthenticationService, AuthenticationService>((serviceProvider, httpclient) =>
         {
@@ -191,9 +194,9 @@ public static class DependencyInjection
         });
 
         services.AddHttpContextAccessor();
-
         services.AddScoped<IUserContext, UserContext>();
     }
+
     
     private static void AddAuthorization(IServiceCollection services)
     {

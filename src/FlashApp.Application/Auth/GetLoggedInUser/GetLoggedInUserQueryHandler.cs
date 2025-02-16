@@ -3,21 +3,13 @@ using FlashApp.Application.Abstractions.Messaging;
 using FlashApp.Domain.Entities.Abstractions;
 using FlashApp.Domain.Entities.Users;
 
-namespace FlashApp.Application.Users.GetLoggedInUser;
-internal sealed class GetLoggedInUserQueryHandler : IQueryHandler<GetLoggedInUserQuery, UserResponse>
+namespace FlashApp.Application.Auth.GetLoggedInUser;
+internal sealed class GetLoggedInUserQueryHandler(IUserRepository userRepository, IUserContext userContext)
+    : IQueryHandler<GetLoggedInUserQuery, UserResponse>
 {
-    private readonly IUserRepository _userRepository;
-    private readonly IUserContext _userContext;
-
-    public GetLoggedInUserQueryHandler(IUserRepository userRepository, IUserContext userContext)
-    {
-        _userRepository = userRepository;
-        _userContext = userContext;
-    }
-
     public async Task<Result<UserResponse>> Handle(GetLoggedInUserQuery request, CancellationToken cancellationToken)
     {
-        Result<ApplicationUser> result = await _userRepository.GetByIdAsync((_userContext.Id), cancellationToken);
+        Result<ApplicationUser> result = await userRepository.GetByIdAsync((userContext.Id), cancellationToken);
 
         if (result.IsFailure)
         {

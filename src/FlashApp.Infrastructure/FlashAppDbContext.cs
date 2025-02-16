@@ -1,5 +1,4 @@
-﻿using FlashApp.Application.Abstractions.DateTimeSetting;
-using FlashApp.Application.Exceptions;
+﻿using FlashApp.Application.Exceptions;
 using FlashApp.Domain.Entities.Abstractions;
 using FlashApp.Domain.Entities.Roles;
 using FlashApp.Infrastructure.Outbox;
@@ -8,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 
 namespace FlashApp.Infrastructure;
-public sealed class FlashAppDbContext(DbContextOptions<FlashAppDbContext> options, IDateTimeProvider dateTimeProvider)
+public sealed class FlashAppDbContext(DbContextOptions<FlashAppDbContext> options)
     : IdentityDbContext<ApplicationUser, Role, int>(options), IUnitOfWork
 {
     private static readonly JsonSerializerSettings JsonSerializerSettings = new()
@@ -46,7 +45,7 @@ public sealed class FlashAppDbContext(DbContextOptions<FlashAppDbContext> option
         var outboxMessages = DomainEvents.GetDomainEvents()
             .Select(domainEvent => new OutboxMessage(
                 Guid.NewGuid(),
-                dateTimeProvider.UtcNow,
+                DateTime.UtcNow,
                 domainEvent.GetType().Name,
                 JsonConvert.SerializeObject(domainEvent, JsonSerializerSettings)))
             .ToList();

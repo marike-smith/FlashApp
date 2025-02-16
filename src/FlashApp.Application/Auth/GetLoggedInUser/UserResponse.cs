@@ -1,4 +1,4 @@
-﻿namespace FlashApp.Application.Users.GetLoggedInUser;
+﻿namespace FlashApp.Application.Auth.GetLoggedInUser;
 public sealed class UserResponse
 {
     public int Id { get; init; }

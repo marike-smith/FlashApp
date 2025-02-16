@@ -1,4 +1,4 @@
-namespace FlashApp.API.Constants;
+namespace FlashApp.Infrastructure.Constants;
 
 public static class ProjectConstants
 {

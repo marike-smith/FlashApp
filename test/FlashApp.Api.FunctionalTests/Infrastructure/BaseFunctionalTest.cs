@@ -1,7 +1,7 @@
 ﻿using FlashApp.Api.FunctionalTests.Auth;
 using FlashApp.API.Controllers.Auth;
-using FlashApp.Application.Users.LogInUser;
 using System.Net.Http.Json;
+using FlashApp.Application.Auth.LogInUser;
 
 namespace FlashApp.Api.FunctionalTests.Infrastructure;
 public abstract class BaseFunctionalTest : IClassFixture<FunctionalTestWebAppFactory>

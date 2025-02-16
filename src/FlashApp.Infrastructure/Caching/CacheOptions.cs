@@ -4,9 +4,9 @@ namespace FlashApp.Infrastructure.Caching;
 
 public static class CacheOptions
 {
-    public static readonly DistributedCacheEntryOptions DefaultExpiration = new()
+    private static readonly DistributedCacheEntryOptions DefaultExpiration = new()
     {
-        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(1)
+        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30)
     };
 
     public static DistributedCacheEntryOptions Create(TimeSpan? expiration = null) =>

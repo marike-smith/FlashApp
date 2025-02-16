@@ -1,5 +1,5 @@
 ﻿using Asp.Versioning.ApiExplorer;
-using FlashApp.API.Constants;
+using FlashApp.Infrastructure.Constants;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
