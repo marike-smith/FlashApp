@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <RootNamespace>FlashApp.IndentityHost</RootNamespace>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Duende.AccessTokenManagement.OpenIdConnect" Version="3.1.1" />
+        <PackageReference Include="Duende.IdentityServer" Version="7.2.0-preview.1" />
+        <PackageReference Include="Duende.IdentityServer.AspNetIdentity" Version="7.2.0-preview.1" />
+        <PackageReference Include="Duende.IdentityServer.Configuration" Version="7.2.0-preview.1" />
+        <PackageReference Include="Duende.IdentityServer.Configuration.EntityFramework" Version="7.2.0-preview.1" />
+        <PackageReference Include="Duende.IdentityServer.EntityFramework" Version="7.2.0-preview.1" />
+        <PackageReference Include="Duende.IdentityServer.EntityFramework.Storage" Version="7.2.0-preview.1" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="..\.dockerignore">
+        <Link>.dockerignore</Link>
+      </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\FlashApp.Domain\FlashApp.Domain.csproj" />
+      <ProjectReference Include="..\FlashApp.Infrastructure\FlashApp.Infrastructure.csproj" />
+    </ItemGroup>
+
+</Project>

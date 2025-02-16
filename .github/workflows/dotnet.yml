@@ -1,0 +1,74 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+name: .NET
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+    workflow_dispatch:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the code from the repository
+      - uses: actions/checkout@v3
+
+      # Step 2: Set up the required .NET version
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 9.0.x
+
+      # Step 3: Restore dependencies
+      - name: Restore dependencies
+        run: |
+          echo "Restoring dependencies for the project in 'src/FlashApp.API'..."
+          dotnet restore
+        working-directory: src/FlashApp.API
+
+      # Step 4: Build the project
+      - name: Build
+        run: |
+          echo "Building the project in 'src/FlashApp.API'..."
+          dotnet build --no-restore --configuration Release
+        working-directory: src/FlashApp.API
+
+      # Step 5: Execute Unit Tests for Application layer
+      - name: Test Application
+        run: |
+          echo "Running unit tests for 'Application' layer..."
+          dotnet test
+        working-directory: test/FlashApp.Application.UnitTests
+
+      # Step 6: Execute Unit Tests for Domain layer
+      - name: Test Domain
+        run: |
+          echo "Running unit tests for 'Domain' layer..."
+          dotnet test
+        working-directory: test/FlashApp.Domain.UnitTests
+
+      # Step 7: Execute Architecture Tests
+      - name: Test Architecture
+        run: |
+          echo "Running architecture tests..."
+          dotnet test
+        working-directory: test/FlashApp.ArchitectureTests
+
+      # Step 8: Execute Functional Tests
+      - name: Test Functional
+        run: |
+          echo "Running functional tests..."
+          dotnet test
+        working-directory: test/FlashApp.Api.FunctionalTests
+
+      # Step 9: Execute Integration Tests
+      - name: Test Integration
+        run: |
+          echo "Running integration tests..."
+          dotnet test
+        working-directory: test/FlashApp.Application.IntegrationTests

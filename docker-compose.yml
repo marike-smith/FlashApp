@@ -1,0 +1,46 @@
+version: '3.4'
+
+services:
+  FlashApp.api:
+    image: ${DOCKER_REGISTRY-}FlashApp.api
+    container_name: FlashApp.API
+    build:
+      context: .
+      dockerfile: src/FlashApp.API/Dockerfile
+    depends_on:
+      - FlashApp-db
+        
+  FlashApp.IdentityHost:
+    image: ${DOCKER_REGISTRY-}FlashApp.identityhost
+    container_name: FlashApp.IdentityHost
+    build:
+      context: .
+      dockerfile: src/FlashApp.IdentityHost/Dockerfile
+    ports:
+    - 5210:5210
+  
+  FlashApp-db:
+    image: postgres:latest 
+    container_name: FlashApp.Db
+    environment:
+      - POSTGRES_DB=FlashAppDb
+    volumes:
+      - ./.container/database:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+
+  FlashApp-seq:
+    image: datalust/seq:latest
+    container_name: FlashApp.Seq
+    environment:
+     - ACCEPT_EULA=Y
+    ports:
+     - 5341:5341
+     - 8081:80
+
+  FlashApp-redis:
+    image: redis:latest
+    container_name: FlashApp.Redis
+    restart: always
+    ports:
+     - 6379:6379
