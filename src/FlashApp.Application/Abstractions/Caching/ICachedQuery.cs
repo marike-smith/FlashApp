@@ -1,8 +1,8 @@
-﻿using FlashApp.Application.Abstractions.Messaging;
+﻿using MediatR;
 
 namespace FlashApp.Application.Abstractions.Caching;
 
-public interface ICachedQuery<TResponse> : IQuery<TResponse>, ICachedQuery;
+public interface ICachedQuery<out TResponse> : IRequest<TResponse>, ICachedQuery;
 
 public interface ICachedQuery
 {

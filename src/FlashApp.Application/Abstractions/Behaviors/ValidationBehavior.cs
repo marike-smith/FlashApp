@@ -1,5 +1,4 @@
 ﻿using FluentValidation;
-using FlashApp.Application.Abstractions.Messaging;
 using FlashApp.Application.Exceptions;
 using MediatR;
 
@@ -10,25 +9,20 @@ namespace FlashApp.Application.Abstractions.Behaviors;
 /// </summary>
 /// <typeparam name="TRequest"></typeparam>
 /// <typeparam name="TResponse"></typeparam>
-public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse> where TRequest : IBaseCommand
+public class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidator<TRequest>> validators)
+    : IPipelineBehavior<TRequest, TResponse>
+    where TRequest : IRequest
 {
-    private readonly IEnumerable<IValidator<TRequest>> _validators;
-
-    public ValidationBehavior(IEnumerable<IValidator<TRequest>> validators)
-    {
-        _validators = validators;
-    }
-
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
-        if (!_validators.Any())
+        if (!validators.Any())
         {
             return await next();
         }
 
         var context = new ValidationContext<TRequest>(request);
 
-        var validationErrors = _validators
+        var validationErrors = validators
             .Select(validator => validator.Validate(context))
             .Where(validationResult => validationResult.Errors.Any())
             .SelectMany(validationResult => validationResult.Errors)

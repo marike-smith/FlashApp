@@ -18,19 +18,16 @@ internal sealed class CustomClaimsTransformation(IServiceProvider serviceProvide
 
         using IServiceScope scope = serviceProvider.CreateScope();
 
-        AuthorizationService authorizationService = scope.ServiceProvider.GetRequiredService<AuthorizationService>();
-
         string identityId = principal.GetIdentityId();
-
-        UserRolesResponse userRoles = await authorizationService.GetRolesForUserAsync(identityId);
+        
 
         var claimsIdentity = new ClaimsIdentity();
-        claimsIdentity.AddClaim(new Claim(JwtRegisteredClaimNames.Sub, userRoles.Id.ToString()));
-
-        foreach (var role in userRoles.Roles)
-        {
-            claimsIdentity.AddClaim(new Claim(ClaimTypes.Role, role.Name));
-        }
+        // claimsIdentity.AddClaim(new Claim(JwtRegisteredClaimNames.Sub, userRoles.Id.ToString()));
+        //
+        // foreach (var role in userRoles.Roles)
+        // {
+        //     claimsIdentity.AddClaim(new Claim(ClaimTypes.Role, role.Name));
+        // }
 
         principal.AddIdentity(claimsIdentity);
 

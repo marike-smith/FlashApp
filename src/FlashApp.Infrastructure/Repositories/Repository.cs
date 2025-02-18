@@ -1,42 +1,41 @@
-﻿using FlashApp.Domain.Entities.Abstractions;
-using Microsoft.EntityFrameworkCore;
+﻿using System.Data;
+using Dapper;
+using FlashApp.Application.Abstractions.Data;
+using FlashApp.Domain.Entities.Abstractions;
 
 namespace FlashApp.Infrastructure.Repositories;
-internal abstract class Repository<TEntity, TEntityId> : IRepository<TEntity, TEntityId>
-    where TEntity : class, IEntity<TEntityId>
-    where TEntityId : notnull
-{
-    protected readonly FlashAppDbContext DbContext;
-    protected Repository(FlashAppDbContext dbContext) => DbContext = dbContext;
 
+public abstract class Repository<TEntity, TEntityId>(ISqlConnectionFactory sqlConnectionFactory) : IRepository<TEntity, TEntityId> where TEntity: Entity
+{
     public virtual async Task<TEntity> GetByIdAsync(TEntityId id, CancellationToken cancellationToken = default)
     {
-        return await DbContext
-            .Set<TEntity>()
-            .FirstOrDefaultAsync(entity => entity.Id.Equals(id), cancellationToken);
+        using var connection = sqlConnectionFactory.CreateConnection();
+        return await connection.QueryFirstOrDefaultAsync<TEntity>(
+            "sp_GetCompanyById",
+            new { Id = id },
+            commandType: CommandType.StoredProcedure
+        );
     }
 
-    public virtual void Add(TEntity entity) => DbContext.Add(entity);
-
+    public virtual void Add(TEntity entity) => throw new NotImplementedException();
+    
     public virtual async Task<IEnumerable<TEntity>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        return await DbContext
-            .Set<TEntity>()
-            .ToListAsync(cancellationToken);
+        throw new NotImplementedException();
     }
-
+    
     public virtual async Task AddAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
-        await DbContext.Set<TEntity>().AddAsync(entity, cancellationToken);
+        throw new NotImplementedException();
     }
-
+    
     public virtual void Update(TEntity entity)
     {
-        DbContext.Set<TEntity>().Update(entity);
+        throw new NotImplementedException();
     }
-
+    
     public virtual void Delete(TEntity entity)
     {
-        DbContext.Set<TEntity>().Remove(entity);
+       throw new NotImplementedException();
     }
 }

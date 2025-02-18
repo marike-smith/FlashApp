@@ -18,8 +18,7 @@ internal sealed class PermissionAuthorizationHandler : AuthorizationHandler<Perm
         }
 
         using IServiceScope scope = _serviceProvider.CreateScope();
-
-        AuthorizationService authorizationService = scope.ServiceProvider.GetRequiredService<AuthorizationService>();
+        
 
         string identityId = context.User.GetIdentityId();
 

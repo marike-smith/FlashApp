@@ -1,6 +1,5 @@
 ﻿using Dapper;
 using FlashApp.Application.Abstractions.Data;
-using FlashApp.Application.Abstractions.DateTimeSetting;
 using FlashApp.Domain.Entities.Abstractions;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -15,7 +14,6 @@ namespace FlashApp.Infrastructure.Outbox;
 internal sealed class ProcessOutboxMessagesJob(
     ISqlConnectionFactory sqlConnectionFactory,
     IPublisher publisher,
-    IDateTimeProvider dateTimeProvider,
     IOptions<OutboxOptions> outboxOptions,
     ILogger<ProcessOutboxMessagesJob> logger)
     : IJob
@@ -96,7 +94,7 @@ internal sealed class ProcessOutboxMessagesJob(
         await connection.ExecuteAsync(sql, new
         {
             outboxMessage.Id,
-            ProcessedOnUtc = dateTimeProvider.UtcNow,
+            ProcessedOnUtc = DateTime.UtcNow,
             Error = exception?.ToString()
         },
         transaction: transaction);

@@ -3,31 +3,23 @@ using Dapper;
 using FlashApp.Application.Abstractions.Authentication;
 using FlashApp.Application.Abstractions.Caching;
 using FlashApp.Application.Abstractions.Data;
-using FlashApp.Application.Abstractions.Email;
 using FlashApp.Domain.Entities.Abstractions;
-using FlashApp.Domain.Entities.Users;
-using FlashApp.Domain.Entities.Roles;
+using FlashApp.Domain.Entities.SensitiveWord;
 using FlashApp.Infrastructure.Authentication;
 using FlashApp.Infrastructure.Authorization;
 using FlashApp.Infrastructure.Caching;
 using FlashApp.Infrastructure.Configuration;
 using FlashApp.Infrastructure.Data;
-using FlashApp.Infrastructure.Email;
-using FlashApp.Infrastructure.Interceptors;
 using FlashApp.Infrastructure.Outbox;
 using FlashApp.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
 using Quartz;
 using Swashbuckle.AspNetCore.SwaggerGen;
-using AuthenticationService = FlashApp.Infrastructure.Authentication.AuthenticationService;
-using IAuthenticationService = FlashApp.Application.Abstractions.Authentication.IAuthenticationService;
 using IdentityOptions = FlashApp.Infrastructure.Configuration.IdentityOptions;
 using FlashApp.Infrastructure.Constants;
 
@@ -86,25 +78,11 @@ public static class DependencyInjection
     {
         string connectionString = configuration.GetConnectionString("DefaultConnection") ??
                                   throw new ArgumentNullException(nameof(configuration));
-
-        services.AddSingleton<UpdateAuditableInterceptor>();
-        services.AddDbContext<FlashAppDbContext>((sp, options) => options.UseSqlServer(connectionString)
-            .AddInterceptors(
-                sp.GetRequiredService<UpdateAuditableInterceptor>()));
         
-        services.AddIdentity<ApplicationUser, Role>()
-            .AddEntityFrameworkStores<FlashAppDbContext>()
-            .AddDefaultTokenProviders();
-        
-        services.AddScoped<IUserRepository, UserRepository>();
-        services.AddScoped<IRepository<User, int>, UserRepository>();
-        services.AddScoped<IRepository<ApplicationUser, int>, UserRepository>();
-        services.AddScoped<IUserRepository, UserRepository>();
-        services.AddTransient<IEmailService, EmailService>();
-        services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<FlashAppDbContext>());
-
         services.AddSingleton<ISqlConnectionFactory>(_ => new SqlConnectionFactory(connectionString));
-
+        
+        services.AddScoped<ISensitiveWordRepository, SensitiveKeywordRepository>();
+        
         SqlMapper.AddTypeHandler(new DateOnlyTypeHandler());
     }
     
@@ -118,20 +96,20 @@ public static class DependencyInjection
     {
         var identityConfiguration = configuration.GetSection(nameof(IdentityOptions)).Get<IdentityOptions>();
 
+        options.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
+        {
+            Description = "Enter API Key in the 'X-API-KEY' header",
+            Type = SecuritySchemeType.ApiKey,
+            Name = "X-API-KEY",
+            In = ParameterLocation.Header
+        });
+        
         options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
-                Description = "Enter Bearer Token'",
+                Description = "Enter Bearer Token",
                 Type = SecuritySchemeType.Http,
                 Scheme = "Bearer",
                 Name = "Authorization",
-                In = ParameterLocation.Header
-            });
-        
-            options.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
-            {
-                Description = "Enter API Key in the 'X-API-KEY' header",
-                Type = SecuritySchemeType.ApiKey,
-                Name = "X-API-KEY",
                 In = ParameterLocation.Header
             });
             
@@ -156,7 +134,7 @@ public static class DependencyInjection
     
     private static void AddAuthentication(IServiceCollection services, IConfiguration configuration)
     {
-        var authenticationOptions = configuration.Get<IdentityOptions>();
+        var identityConfiguration = configuration.GetSection(nameof(IdentityOptions)).Get<IdentityOptions>();
 
         services
             .AddAuthentication(options =>
@@ -177,20 +155,15 @@ public static class DependencyInjection
             .AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(CustomSecuritySchemes.ApiKey, null)
             .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
             {
-                options.Authority = authenticationOptions.TokenEndpoint;
-                options.Audience = authenticationOptions.Audience;
+                options.Authority = identityConfiguration.TokenEndpoint;
+                options.Audience = identityConfiguration.Audience;
             });
 
         services.ConfigureOptions<JwtBearerOptionsSetup>();
 
-        services.AddHttpClient<IAuthenticationService, AuthenticationService>((serviceProvider, httpclient) =>
-        {
-            httpclient.BaseAddress = new Uri(authenticationOptions.TokenEndpoint);
-        });
-
         services.AddHttpClient<IJwtService, JwtService>((serviceProvider, httpclient) =>
         {
-            httpclient.BaseAddress = new Uri(authenticationOptions.TokenEndpoint);
+            httpclient.BaseAddress = new Uri(identityConfiguration.TokenEndpoint);
         });
 
         services.AddHttpContextAccessor();
@@ -200,35 +173,36 @@ public static class DependencyInjection
     
     private static void AddAuthorization(IServiceCollection services)
     {
-        services.AddScoped<AuthorizationService>();
-
         services.AddTransient<IClaimsTransformation, CustomClaimsTransformation>();
 
         services.AddTransient<IAuthorizationHandler, PermissionAuthorizationHandler>();
-
-        services.AddTransient<IAuthorizationPolicyProvider, PermissionAuthorizationPolicyProvider>();
+        
     }
 
     private static void AddCaching(IServiceCollection services, IConfiguration configuration)
     {
-        string connectionString = configuration.GetConnectionString("Cache") ??
+        string redisConnectionString = configuration.GetConnectionString("Cache") ??
                                 throw new ArgumentNullException(nameof(configuration));
 
-        services.AddStackExchangeRedisCache(options => options.Configuration = connectionString);
+        services.AddStackExchangeRedisCache(options => options.Configuration = redisConnectionString);
 
         services.AddSingleton<ICacheService, CacheService>();
     }
 
     private static void AddHealthChecks(IServiceCollection services, IConfiguration configuration)
     {
+        var sqlConnectionString = configuration.GetConnectionString("DefaultConnection") ?? 
+                                  throw new ArgumentNullException(nameof(configuration));
+        
+        var redisConnectionString = configuration.GetConnectionString("Cache") ?? 
+                                  throw new ArgumentNullException(nameof(configuration));
         services.AddHealthChecks()
-            .AddSqlServer(configuration.GetConnectionString("DefaultConnection"))
-            .AddRedis(configuration.GetConnectionString("Cache"));
+            .AddSqlServer(sqlConnectionString)
+            .AddRedis(redisConnectionString);
     }
 
     ///<summary>
     /// Add API Versioning when using Controllers
-    /// If using Minimal APIs, consider the Nuget Package "Asp.Versioning.Http"
     /// </summary>
     /// <param name="services"></param>
     private static void AddApiVersioning(IServiceCollection services)

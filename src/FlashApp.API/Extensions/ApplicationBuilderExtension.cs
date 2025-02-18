@@ -14,9 +14,7 @@ public static class ApplicationBuilderExtension
     public static void ApplyMigrations(this IApplicationBuilder app)
     {
         using IServiceScope scope = app.ApplicationServices.CreateScope();
-        using FlashAppDbContext dbContext = scope.ServiceProvider.GetRequiredService<FlashAppDbContext>();
-
-        dbContext.Database.MigrateAsync();
+ 
     }
 
     public static void UseCustomExceptionHandler(this IApplicationBuilder app)
@@ -27,5 +25,6 @@ public static class ApplicationBuilderExtension
     
     public static IApplicationBuilder UseSecurityHeadersMiddleware(this IApplicationBuilder app)
         => app.UseMiddleware<SecurityHeadersMiddleware>();
+    
 }
 

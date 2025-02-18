@@ -51,5 +51,5 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/FlashApp:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/FlashApp:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/flash-app:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/flash-app:${{ github.sha }}

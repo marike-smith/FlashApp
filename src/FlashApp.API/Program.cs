@@ -6,7 +6,7 @@ using FlashApp.Application;
 using Serilog;
 using FlashApp.Infrastructure;
 using FlashApp.Infrastructure.Configuration;
-using Swashbuckle.AspNetCore.SwaggerGen;
+using FlashApp.API.Extensions;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Configuration
@@ -29,6 +29,7 @@ builder.Services.AddRouting(options => options.LowercaseUrls = true);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddHostedService<ReservedKeywordSeederService>(); 
 
 //in order to configure swagger with different versions 
 builder.Services.ConfigureOptions<ConfigureSwaggerOptions>();
@@ -65,7 +66,7 @@ app.UseSerilogRequestLogging();
 
 app.UseCustomExceptionHandler();
 
-// app.UseSecurityHeadersMiddleware();
+app.UseSecurityHeadersMiddleware();
 
 app.UseAuthentication();
 

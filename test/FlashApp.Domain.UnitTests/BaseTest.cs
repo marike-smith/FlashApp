@@ -4,7 +4,7 @@ namespace FlashApp.Domain.UnitTests;
 
 public abstract class BaseTest
 {
-    public static T AssertDomainEventWasPublished<T, TId>(IEntity<TId> entity)
+    public static T AssertDomainEventWasPublished<T, TId>(IEntity entity)
         where T : IDomainEvent
     {
         T? domainEvent = DomainEvents.GetDomainEvents().OfType<T>().SingleOrDefault() ?? throw new Exception($"{typeof(T).Name} was not published");

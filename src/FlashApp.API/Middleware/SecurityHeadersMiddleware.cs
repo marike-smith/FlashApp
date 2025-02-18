@@ -1,3 +1,5 @@
+namespace FlashApp.API.Middleware;
+
 public class SecurityHeadersMiddleware(RequestDelegate next)
 {
     public async Task Invoke(HttpContext context)

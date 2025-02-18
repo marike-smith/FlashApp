@@ -10,38 +10,30 @@ namespace FlashApp.Application.Abstractions.Behaviors;
 /// </summary>
 /// <typeparam name="TRequest"></typeparam>
 /// <typeparam name="TResponse"></typeparam>
-public class LoggingBehavior<TRequest, TResponse> 
-    : IPipelineBehavior<TRequest, TResponse> 
+public class LoggingBehavior<TRequest, TResponse>(ILogger<LoggingBehavior<TRequest, TResponse>> logger)
+    : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IBaseRequest
     where TResponse : Result
 {
-
-    private readonly ILogger<LoggingBehavior<TRequest, TResponse>> _logger;
-
-    public LoggingBehavior(ILogger<LoggingBehavior<TRequest, TResponse>> logger)
-    {
-        _logger = logger;
-    }
-
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
         string name = request.GetType().Name;
 
         try
         {
-            _logger.LogInformation("Executing request {Request}", name);
+            logger.LogInformation("Executing request {Request}", name);
 
             TResponse result = await next();
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Request {Request} processed successfully", name);
+                logger.LogInformation("Request {Request} processed successfully", name);
             }
             else
             {
                 using (LogContext.PushProperty("Error", result.Error, true))
                 {
-                    _logger.LogError("Request {Request} processed with error", name);
+                    logger.LogError("Request {Request} processed with error", name);
                 }
             }            
 
@@ -49,7 +41,7 @@ public class LoggingBehavior<TRequest, TResponse>
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Request {Request} processing failed", name);
+            logger.LogError(ex, "Request {Request} processing failed", name);
 
             throw;
         }

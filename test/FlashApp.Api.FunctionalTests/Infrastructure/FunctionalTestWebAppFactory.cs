@@ -14,7 +14,7 @@ using FlashApp.Infrastructure.Configuration;
 
 
 namespace FlashApp.Api.FunctionalTests.Infrastructure;
-public class FunctionalTestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
+public abstract class FunctionalTestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private readonly MsSqlContainer _dbContainer = new MsSqlBuilder()
       .WithImage("mcr.microsoft.com/mssql/server:latest")
@@ -30,13 +30,7 @@ public class FunctionalTestWebAppFactory : WebApplicationFactory<Program>, IAsyn
         _ = builder.ConfigureTestServices(services =>
         {
             #region Wiring up any dependencies on the database container
-
-            services.RemoveAll(typeof(DbContextOptions<FlashAppDbContext>));
-
-            services.AddDbContext<FlashAppDbContext>(options =>
-                options
-                .UseSqlServer(_dbContainer.GetConnectionString())
-                .UseSnakeCaseNamingConvention());
+            
 
             services.RemoveAll(typeof(ISqlConnectionFactory));
 

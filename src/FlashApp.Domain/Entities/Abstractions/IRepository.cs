@@ -1,7 +1,7 @@
 ﻿namespace FlashApp.Domain.Entities.Abstractions
 {
-    public interface IRepository<TEntity, TEntityId>
-            where TEntity : class, IEntity<TEntityId>
+    public interface IRepository<TEntity, in TEntityId>
+            where TEntity : Entity
             where TEntityId : notnull
     {
         Task<TEntity> GetByIdAsync(TEntityId id, CancellationToken cancellationToken = default);

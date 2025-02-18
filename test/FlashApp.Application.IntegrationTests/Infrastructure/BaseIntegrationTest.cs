@@ -8,13 +8,11 @@ public abstract class BaseIntegrationTest : IClassFixture<IntegrationTestWebAppF
     private readonly IServiceScope _serviceScope; // Resolve any scoped services.
 
     protected readonly ISender Sender; // To Send commands and queries to run the integration tests
-    protected readonly FlashAppDbContext DbContext; // Used to write any assertions
 
     protected BaseIntegrationTest(IntegrationTestWebAppFactory webAppFactory)
     {
         _serviceScope = webAppFactory.Services.CreateScope();
 
         Sender = _serviceScope.ServiceProvider.GetRequiredService<ISender>();
-        DbContext = _serviceScope.ServiceProvider.GetRequiredService<FlashAppDbContext>();
     }
 }

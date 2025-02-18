@@ -29,13 +29,7 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
         builder.ConfigureTestServices(services =>
         {
             #region Wiring up any dependencies on the database container
-
-            services.RemoveAll(typeof(DbContextOptions<FlashAppDbContext>));
-
-            services.AddDbContext<FlashAppDbContext>(options =>
-                options
-                .UseSqlServer(_dbContainer.GetConnectionString())
-                .UseSnakeCaseNamingConvention());
+            
 
             services.RemoveAll(typeof(ISqlConnectionFactory));
 
